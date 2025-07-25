@@ -2,16 +2,17 @@
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    const path = url.pathname.replace(/\/+$/, ''); // 移除路径末尾的斜杠
 
     // 根路径返回 Hello World
-    if (url.pathname === '/') {
+    if (path === '') {
       return new Response('Hello World', {
         headers: { 'Content-Type': 'text/plain; charset=utf-8' },
       });
     }
 
-    // /api 返回随机视频 302 跳转
-    if (url.pathname === '/api') {
+    // /api 或 /api/ 都返回随机视频 302 跳转
+    if (path === '/api') {
       try {
         const res = await fetch('https://ghweb.996855.xyz/video/random/video.json');
         const data = await res.json();
