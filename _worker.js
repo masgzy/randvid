@@ -5,18 +5,7 @@ export default {
     const path = url.pathname;
     const params = url.searchParams;
 
-    // 处理预检请求（OPTIONS）
-    if (request.method === 'OPTIONS') {
-      return new Response(null, {
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type',
-        },
-      });
-    }
-
-    // /api 或 /api/ 返回随机视频的302重定向
+    // /api 或 /api/ 返回随机视频流
     if (path === '/api' || path === '/api/') {
       try {
         // 获取文件名参数，默认为 'video.json'
@@ -40,22 +29,23 @@ export default {
 
         console.log(`随机视频 URL: ${videoUrl}`);
 
-        // 2. 返回302重定向到视频URL，并添加CORS头
-        const response = Response.redirect(videoUrl, 302);
-        response.headers.set('Access-Control-Allow-Origin', '*');
-        return response;
+        // 2. 获取视频流并返回
+        const videoRes = await fetch(videoUrl);
         
+        // 3. 返回视频流，并设置正确的 Content-Type
+        return new Response(videoRes.body, {
+          headers: {
+            'Content-Type': 'video/mp4', // 如果是 .webm 改成 'video/webm'
+            'Access-Control-Allow-Origin': '*', // 允许跨域
+          },
+        });
       } catch (err) {
         console.error('获取视频失败：', err);
-        const errorResponse = new Response('获取视频失败', { status: 500 });
-        errorResponse.headers.set('Access-Control-Allow-Origin', '*');
-        return errorResponse;
+        return new Response('获取视频失败', { status: 500 });
       }
     }
 
     // 其他路径返回 404
-    const notFoundResponse = new Response('页面不存在', { status: 404 });
-    notFoundResponse.headers.set('Access-Control-Allow-Origin', '*');
-    return notFoundResponse;
+    return new Response('页面不存在', { status: 404 });
   },
 };
