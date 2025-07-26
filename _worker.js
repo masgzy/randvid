@@ -5,6 +5,17 @@ export default {
     const path = url.pathname;
     const params = url.searchParams;
 
+    // 处理预检请求（OPTIONS）
+    if (request.method === 'OPTIONS') {
+      return new Response(null, {
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+        },
+      });
+    }
+
     // /api 或 /api/ 返回随机视频的302重定向
     if (path === '/api' || path === '/api/') {
       try {
@@ -29,16 +40,22 @@ export default {
 
         console.log(`随机视频 URL: ${videoUrl}`);
 
-        // 2. 返回302重定向到视频URL
-        return Response.redirect(videoUrl, 302);
+        // 2. 返回302重定向到视频URL，并添加CORS头
+        const response = Response.redirect(videoUrl, 302);
+        response.headers.set('Access-Control-Allow-Origin', '*');
+        return response;
         
       } catch (err) {
         console.error('获取视频失败：', err);
-        return new Response('获取视频失败', { status: 500 });
+        const errorResponse = new Response('获取视频失败', { status: 500 });
+        errorResponse.headers.set('Access-Control-Allow-Origin', '*');
+        return errorResponse;
       }
     }
 
     // 其他路径返回 404
-    return new Response('页面不存在', { status: 404 });
+    const notFoundResponse = new Response('页面不存在', { status: 404 });
+    notFoundResponse.headers.set('Access-Control-Allow-Origin', '*');
+    return notFoundResponse;
   },
 };
