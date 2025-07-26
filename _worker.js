@@ -2,20 +2,22 @@
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    const path = url.pathname.replace(/\/+$/, ''); // 移除末尾斜杠
-
-    // 根路径返回 Hello World
-    if (path === '') {
-      return new Response('Hello World', {
-        headers: { 'Content-Type': 'text/plain; charset=utf-8' },
-      });
-    }
+    const path = url.pathname;
+    const params = url.searchParams;
 
     // /api 或 /api/ 返回随机视频流
-    if (path === '/api') {
+    if (path === '/api' || path === '/api/') {
       try {
+        // 获取文件名参数，默认为 'video.json'
+        let filename = params.get('f') || 'video.json';
+        
+        // 安全校验：确保文件名不包含路径遍历和只允许.json文件
+        if (filename.includes('..') || !filename.endsWith('.json')) {
+          return new Response('无效的文件名', { status: 400 });
+        }
+
         // 1. 获取随机视频的 URL
-        const res = await fetch('https://ghweb.996855.xyz/video/random/video.json');
+        const res = await fetch(`https://ghweb.996855.xyz/video/random/${filename}`);
         const data = await res.json();
 
         if (!Array.isArray(data) || data.length === 0) {
